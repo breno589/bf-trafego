@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BF Tráfego e Performance | Gestão Profissional de Anúncios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-elevated: #12121a;
+            --fg: #ffffff;
+            --muted: #6b7280;
+            --accent: #00ff88;
+            --accent-dim: rgba(0, 255, 136, 0.15);
+            --card: #16161f;
+            --border: #2a2a3a;
+            --glow: rgba(0, 255, 136, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            overflow-x: hidden;
+        }
+
+        .font-display {
+            font-family: 'Syne', sans-serif;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 255, 136, 0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 50%, rgba(59, 130, 246, 0.05), transparent),
+                linear-gradient(180deg, var(--bg) 0%, #0d0d14 100%);
+        }
+
+        .bg-pattern::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px var(--glow), 0 0 40px rgba(0, 255, 136, 0.2); }
+            50% { box-shadow: 0 0 30px var(--glow), 0 0 60px rgba(0, 255, 136, 0.3); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+            @keyframes float {
+                0%, 100% { transform: none; }
+            }
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn-primary:hover::before {
+            transform: translateX(100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 4px;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--fg);
+            font-weight: 500;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .btn-secondary:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 4px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 255, 136, 0.1);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .service-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .card:hover .service-icon {
+            background: var(--accent);
+        }
+
+        .card:hover .service-icon svg {
+            stroke: var(--bg);
+        }
+
+        .testimonial-card {
+            background: linear-gradient(135deg, var(--card) 0%, rgba(22, 22, 31, 0.5) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .testimonial-card::before {
+            content: '"';
+            font-family: 'Syne', sans-serif;
+            font-size: 120px;
+            line-height: 1;
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            color: var(--accent);
+            opacity: 0.15;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .form-input::placeholder {
+            color: var(--muted);
+        }
+
+        .nav-link {
+            color: var(--muted);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--fg);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .stat-number {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent) 0%, #00cc6a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .float-element {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .float-element-delay {
+            animation-delay: -3s;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 320px;
+            background: var(--bg-elevated);
+            border-left: 1px solid var(--border);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+            padding: 2rem;
+        }
+
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        .mobile-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 99;
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .whatsapp-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background: #25d366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+            z-index: 50;
+            transition: all 0.3s;
+            animation: pulse-glow 2s infinite;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+        }
+
+        .benefit-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text span {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="header">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="logo-text font-display">
+                BF<span>Tráfego</span>
+            </a>
+            
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="#sobre" class="nav-link">Sobre</a>
+                <a href="#trafego" class="nav-link">Tráfego Pago</a>
+                <a href="#servicos" class="nav-link">Serviços</a>
+                <a href="#depoimentos" class="nav-link">Depoimentos</a>
+                <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="btn-primary text-sm">Fale Conosco</a>
+            </nav>
+
+            <button class="md:hidden p-2" id="menuBtn" aria-label="Abrir menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="absolute top-4 right-4 p-2" id="closeMenuBtn" aria-label="Fechar menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <nav class="flex flex-col gap-6 mt-12">
+            <a href="#sobre" class="text-lg font-medium hover:text-[var(--accent)] transition-colors">Sobre</a>
+            <a href="#trafego" class="text-lg font-medium hover:text-[var(--accent)] transition-colors">Tráfego Pago</a>
+            <a href="#servicos" class="text-lg font-medium hover:text-[var(--accent)] transition-colors">Serviços</a>
+            <a href="#depoimentos" class="text-lg font-medium hover:text-[var(--accent)] transition-colors">Depoimentos</a>
+            <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="btn-primary text-center mt-4">Fale Conosco</a>
+        </nav>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center pt-20 pb-16 px-6 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto w-full">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="max-w-xl">
+                    <div class="reveal inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent-dim)] border border-[rgba(0,255,136,0.3)] mb-6">
+                        <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
+                        <span class="text-sm font-medium text-[var(--accent)]">Especialistas em Results</span>
+                    </div>
+                    
+                    <h1 class="reveal reveal-delay-1 font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+                        Aumente suas vendas com <span class="gradient-text">tráfego pago estratégico</span>
+                    </h1>
+                    
+                    <p class="reveal reveal-delay-2 text-lg sm:text-xl text-[var(--muted)] mb-8 leading-relaxed">
+                        Gestão profissional de anúncios para atrair clientes todos os dias. Transforme cliques em vendas com estratégias baseadas em dados.
+                    </p>
+                    
+                    <div class="reveal reveal-delay-3 flex flex-col sm:flex-row gap-4">
+                        <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="btn-primary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            Fale conosco no WhatsApp
+                        </a>
+                        <a href="#servicos" class="btn-secondary inline-flex items-center justify-center">
+                            Ver Serviços
+                        </a>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-4 relative hidden lg:block">
+                    <div class="relative">
+                        <div class="float-element absolute -top-8 -left-8 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-2xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0f" stroke-width="2">
+                                        <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                                        <polyline points="17,6 23,6 23,12"></polyline>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">Vendas hoje</p>
+                                    <p class="text-lg font-bold text-[var(--accent)]">+47%</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="float-element float-element-delay absolute -bottom-4 -right-4 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-2xl">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium">Novos leads</p>
+                                    <p class="text-lg font-bold text-blue-400">+328</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-[var(--card)] to-[var(--bg-elevated)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="font-semibold">Performance Mensal</h3>
+                                <span class="text-sm text-[var(--accent)] font-medium">+156% ROI</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-end gap-2 h-32">
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 40%"></div>
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 55%"></div>
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 45%"></div>
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 70%"></div>
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 60%"></div>
+                                    <div class="flex-1 bg-[var(--accent-dim)] rounded-t-lg" style="height: 85%"></div>
+                                    <div class="flex-1 bg-[var(--accent)] rounded-t-lg" style="height: 100%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-[var(--muted)]">
+                                    <span>Jan</span>
+                                    <span>Fev</span>
+                                    <span>Mar</span>
+                                    <span>Abr</span>
+                                    <span>Mai</span>
+                                    <span>Jun</span>
+                                    <span>Jul</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-16 px-6 border-y border-[var(--border)] bg-[var(--bg-elevated)]/50">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="reveal">
+                    <p class="stat-number font-display">150+</p>
+                    <p class="text-[var(--muted)] mt-2">Clientes Atendidos</p>
+                </div>
+                <div class="reveal reveal-delay-1">
+                    <p class="stat-number font-display">R$ 2M+</p>
+                    <p class="text-[var(--muted)] mt-2">Investidos em Anúncios</p>
+                </div>
+                <div class="reveal reveal-delay-2">
+                    <p class="stat-number font-display">5x</p>
+                    <p class="text-[var(--muted)] mt-2">ROI Médio</p>
+                </div>
+                <div class="reveal reveal-delay-3">
+                    <p class="stat-number font-display">98%</p>
+                    <p class="text-[var(--muted)] mt-2">Satisfação</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre Section -->
+    <section id="sobre" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <span class="reveal text-sm font-semibold text-[var(--accent)] tracking-wider uppercase mb-4 block">Sobre Nós</span>
+                    <h2 class="reveal reveal-delay-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                        BF Tráfego e Performance
+                    </h2>
+                    <p class="reveal reveal-delay-2 text-lg text-[var(--muted)] leading-relaxed mb-6">
+                        A BF Tráfego e Performance é especializada em gestão de tráfego pago, ajudando empresas a crescerem através de estratégias inteligentes de anúncios online.
+                    </p>
+                    <p class="reveal reveal-delay-3 text-lg text-[var(--muted)] leading-relaxed mb-8">
+                        Trabalhamos com foco em resultados, analisando dados e otimizando campanhas para gerar mais leads, vendas e reconhecimento de marca. Nossa metodologia é baseada em testes constantes e decisões orientadas a dados.
+                    </p>
+                    <div class="reveal reveal-delay-4 flex flex-wrap gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="benefit-check">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="font-medium">Meta Business Partner</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="benefit-check">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="font-medium">Google Partner</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="reveal reveal-delay-2 relative">
+                    <div class="bg-gradient-to-br from-[var(--card)] to-[var(--bg)] border border-[var(--border)] rounded-3xl p-8 lg:p-12">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="text-center p-6 bg-[var(--bg)] rounded-2xl">
+                                <p class="text-3xl font-bold text-[var(--accent)] mb-2">5+</p>
+                                <p class="text-sm text-[var(--muted)]">Anos de Experiência</p>
+                            </div>
+                            <div class="text-center p-6 bg-[var(--bg)] rounded-2xl">
+                                <p class="text-3xl font-bold text-[var(--accent)] mb-2">24/7</p>
+                                <p class="text-sm text-[var(--muted)]">Suporte ao Cliente</p>
+                            </div>
+                            <div class="text-center p-6 bg-[var(--bg)] rounded-2xl">
+                                <p class="text-3xl font-bold text-[var(--accent)] mb-2">100%</p>
+                                <p class="text-sm text-[var(--muted)]">Foco em Resultados</p>
+                            </div>
+                            <div class="text-center p-6 bg-[var(--bg)] rounded-2xl">
+                                <p class="text-3xl font-bold text-[var(--accent)] mb-2">360</p>
+                                <p class="text-sm text-[var(--muted)]">Visão Completa</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- O que é Tráfego Pago -->
+    <section id="trafego" class="py-24 px-6 bg-[var(--bg-elevated)]/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="reveal text-sm font-semibold text-[var(--accent)] tracking-wider uppercase mb-4 block">Entenda</span>
+                <h2 class="reveal reveal-delay-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    O que é Tráfego Pago?
+                </h2>
+                <p class="reveal reveal-delay-2 text-lg text-[var(--muted)] leading-relaxed">
+                    Tráfego pago é uma estratégia de marketing digital onde empresas investem em anúncios em plataformas como Google, Facebook e Instagram para atrair clientes de forma rápida e escalável.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                <div class="reveal card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Resultados Rápidos</h3>
+                    <p class="text-[var(--muted)]">Comece a receber leads e vendas em poucos dias após o lançamento da campanha.</p>
+                </div>
+
+                <div class="reveal reveal-delay-1 card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Público Segmentado</h3>
+                    <p class="text-[var(--muted)]">Alcance exatamente as pessoas interessadas no seu produto ou serviço.</p>
+                </div>
+
+                <div class="reveal reveal-delay-2 card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Aumento nas Vendas</h3>
+                    <p class="text-[var(--muted)]">Transforme visitantes em clientes com estratégias de conversão otimizadas.</p>
+                </div>
+
+                <div class="reveal reveal-delay-3 card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                            <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Controle Total</h3>
+                    <p class="text-[var(--muted)]">Defina seu orçamento diário e tenha controle total sobre o investimento.</p>
+                </div>
+
+                <div class="reveal reveal-delay-4 card">
+                    <div class="service-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Escalabilidade</h3>
+                    <p class="text-[var(--muted)]">Aumente seu investimento conforme os resultados aparecem.</p>
+                </div>
+
+                <div class="reveal reveal-delay-5 card bg-gradient-to-br from-[var(--accent-dim)] to-[var(--card)] border-[rgba(0,255,136,0.2)]">
+                    <div class="flex items-center gap-4 mb-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <h3 class="text-xl font-bold">Exemplo Prático</h3>
+                    </div>
+                    <p class="text-[var(--muted)] italic">
+                        "Ao investir em anúncios, sua empresa aparece para pessoas que já estão interessadas no seu produto ou serviço."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Serviços -->
+    <section id="servicos" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="reveal text-sm font-semibold text-[var(--accent)] tracking-wider uppercase mb-4 block">Nossos Serviços</span>
+                <h2 class="reveal reveal-delay-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    Soluções Completas em Tráfego Pago
+                </h2>
+                <p class="reveal reveal-delay-2 text-lg text-[var(--muted)]">
+                    Oferecemos gestão profissional de anúncios para maximizar seus resultados.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="reveal card group">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center flex-shrink-0 group-hover:from-blue-500 group-hover:to-blue-600 transition-all duration-300">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-blue-500 group-hover:text-white transition-colors">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Gestão de Anúncios no Facebook Ads</h3>
+                            <p class="text-[var(--muted)] mb-4">
+                                Campanhas otimizadas para Facebook e Instagram, com segmentação avançada, criativos de alta performance e monitoramento constante de resultados.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                    <span class="text-[var(--muted)]">Segmentação por interesses e comportamentos</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                    <span class="text-[var(--muted)]">Públicos semelhantes (Lookalike)</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                    <span class="text-[var(--muted)]">Remarketing avançado</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-1 card group">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/20 flex items-center justify-center flex-shrink-0 group-hover:from-red-500 group-hover:to-red-600 transition-all duration-300">
+                            <svg width="28" height="28" viewBox="0 0 24 24" class="text-red-500 group-hover:text-white transition-colors">
+                                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Gestão de Anúncios no Google Ads</h3>
+                            <p class="text-[var(--muted)] mb-4">
+                                Anúncios no Google Search, Display e YouTube para capturar clientes no momento exato da busca, com alta intenção de compra.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                    <span class="text-[var(--muted)]">Palavras-chave estratégicas</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                    <span class="text-[var(--muted)]">Anúncios responsivos otimizados</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                    <span class="text-[var(--muted)]">Integração com Google Analytics</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-2 card group">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--accent-dim)] to-[rgba(0,255,136,0.3)] flex items-center justify-center flex-shrink-0 group-hover:from-[var(--accent)] group-hover:to-[#00cc6a] transition-all duration-300">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--accent)] group-hover:text-[var(--bg)] transition-colors">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Estratégias de Conversão</h3>
+                            <p class="text-[var(--muted)] mb-4">
+                                Otimização de funis de vendas, landing pages e estratégias de copywriting para aumentar suas taxas de conversão.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></div>
+                                    <span class="text-[var(--muted)]">Análise de funil completo</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></div>
+                                    <span class="text-[var(--muted)]">Testes A/B de criativos</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></div>
+                                    <span class="text-[var(--muted)]">Otimização de páginas de destino</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-3 card group">
+                    <div class="flex items-start gap-6">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center flex-shrink-0 group-hover:from-purple-500 group-hover:to-purple-600 transition-all duration-300">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-500 group-hover:text-white transition-colors">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-3">Análise de Métricas e Otimização</h3>
+                            <p class="text-[var(--muted)] mb-4">
+                                Relatórios detalhados e análise de dados para decisões estratégicas baseadas em métricas reais de desempenho.
+                            </p>
+                            <ul class="space-y-2">
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                    <span class="text-[var(--muted)]">Dashboards personalizados</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                    <span class="text-[var(--muted)]">Relatórios semanais de performance</span>
+                                </li>
+                                <li class="flex items-center gap-2 text-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                                    <span class="text-[var(--muted)]">Otimização contínua de campanhas</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Depoimentos -->
+    <section id="depoimentos" class="py-24 px-6 bg-[var(--bg-elevated)]/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="reveal text-sm font-semibold text-[var(--accent)] tracking-wider uppercase mb-4 block">Depoimentos</span>
+                <h2 class="reveal reveal-delay-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    O Que Nossos Clientes Dizem
+                </h2>
+                <p class="reveal reveal-delay-2 text-lg text-[var(--muted)]">
+                    Resultados reais de empresas que confiaram na BF Tráfego e Performance.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="reveal testimonial-card">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold">
+                            MC
+                        </div>
+                        <div>
+                            <p class="font-semibold">Marina Costa</p>
+                            <p class="text-sm text-[var(--muted)]">E-commerce de Moda</p>
+                        </div>
+                    </div>
+                    <p class="text-[var(--muted)] leading-relaxed">
+                        "Em 3 meses triplicamos as vendas do nosso e-commerce. A equipe da BF entendeu exatamente o que precisávamos e entregou resultados impressionantes. Super recomendo!"
+                    </p>
+                    <div class="flex gap-1 mt-4">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-1 testimonial-card">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold">
+                            RS
+                        </div>
+                        <div>
+                            <p class="font-semibold">Ricardo Santos</p>
+                            <p class="text-sm text-[var(--muted)]">Clínica de Estética</p>
+                        </div>
+                    </div>
+                    <p class="text-[var(--muted)] leading-relaxed">
+                        "A BF transformou nossa captação de pacientes. Antes gastávamos muito sem retorno, agora cada real investido traz resultados concretos. ROI de 8x em 60 dias!"
+                    </p>
+                    <div class="flex gap-1 mt-4">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-2 testimonial-card">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
+                            PA
+                        </div>
+                        <div>
+                            <p class="font-semibold">Patricia Almeida</p>
+                            <p class="text-sm text-[var(--muted)]">Consultoria Financeira</p>
+                        </div>
+                    </div>
+                    <p class="text-[var(--muted)] leading-relaxed">
+                        "Profissionalismo e dedicação impecáveis. A equipe sempre disponível para ajustes e com relatórios transparentes. Conquistamos mais de 200 leads qualificados em um mês."
+                    </p>
+                    <div class="flex gap-1 mt-4">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 px-6 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-[var(--accent-dim)] to-transparent opacity-50"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <h2 class="reveal font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                Pronto para Aumentar suas Vendas?
+            </h2>
+            <p class="reveal reveal-delay-1 text-lg text-[var(--muted)] mb-8 max-w-2xl mx-auto">
+                Entre em contato agora mesmo e descubra como a BF Tráfego e Performance pode transformar sua empresa com estratégias de tráfego pago de alta performance.
+            </p>
+            <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="reveal reveal-delay-2 btn-primary text-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Falar com Especialista
+            </a>
+        </div>
+    </section>
+
+    <!-- Contato -->
+    <section id="contato" class="py-24 px-6 bg-[var(--bg-elevated)]/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-16">
+                <div>
+                    <span class="reveal text-sm font-semibold text-[var(--accent)] tracking-wider uppercase mb-4 block">Contato</span>
+                    <h2 class="reveal reveal-delay-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                        Vamos Conversar?
+                    </h2>
+                    <p class="reveal reveal-delay-2 text-lg text-[var(--muted)] mb-8">
+                        Preencha o formulário ou entre em contato diretamente pelo WhatsApp. Responderemos em até 24 horas úteis.
+                    </p>
+                    
+                    <div class="reveal reveal-delay-3 space-y-6">
+                        <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="flex items-center gap-4 p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl hover:border-[#25d366] transition-all group">
+                            <div class="w-12 h-12 rounded-full bg-[#25d366]/20 flex items-center justify-center group-hover:bg-[#25d366] transition-colors">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#25d366" class="group-hover:fill-white transition-colors">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-semibold">WhatsApp</p>
+                                <p class="text-[var(--muted)]">(16) 99704-2199</p>
+                            </div>
+                        </a>
+
+                        <a href="mailto:brenoferreiradesigner@gmail.com" class="flex items-center gap-4 p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl hover:border-[var(--accent)] transition-all group">
+                            <div class="w-12 h-12 rounded-full bg-[var(--accent-dim)] flex items-center justify-center group-hover:bg-[var(--accent)] transition-colors">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" class="group-hover:stroke-[var(--bg)] transition-colors">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-semibold">E-mail</p>
+                                <p class="text-[var(--muted)]">brenoferreiradesigner@gmail.com</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="reveal reveal-delay-2">
+                    <form id="contactForm" class="bg-[var(--card)] border border-[var(--border)] rounded-3xl p-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="name" class="block text-sm font-medium mb-2">Nome completo</label>
+                                <input type="text" id="name" name="name" required class="form-input" placeholder="Seu nome">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium mb-2">WhatsApp</label>
+                                <input type="tel" id="phone" name="phone" required class="form-input" placeholder="(00) 00000-0000">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium mb-2">Mensagem</label>
+                                <textarea id="message" name="message" rows="4" required class="form-input resize-none" placeholder="Como podemos ajudar?"></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary w-full">
+                                Enviar Mensagem
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-[var(--border)]">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <span class="logo-text font-display">BF<span>Tráfego</span></span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <a href="#sobre" class="text-[var(--muted)] hover:text-[var(--fg)] transition-colors text-sm">Sobre</a>
+                    <a href="#servicos" class="text-[var(--muted)] hover:text-[var(--fg)] transition-colors text-sm">Serviços</a>
+                    <a href="#contato" class="text-[var(--muted)] hover:text-[var(--fg)] transition-colors text-sm">Contato</a>
+                </div>
+                <p class="text-sm text-[var(--muted)]">
+                    2024 BF Tráfego e Performance. Todos os direitos reservados.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/5516997042199?text=Olá! Gostaria de saber mais sobre os serviços da BF Tráfego" target="_blank" class="whatsapp-float" aria-label="Contato via WhatsApp">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    </a>
+
+    <script>
+        const header = document.getElementById('header');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const contactForm = document.getElementById('contactForm');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        menuBtn.addEventListener('click', openMobileMenu);
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+
+        mobileMenu.querySelectorAll('a[href^="#"]').forEach(function(link) {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        window.addEventListener('scroll', function() {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                header.style.background = 'rgba(10, 10, 15, 0.95)';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.borderBottom = '1px solid var(--border)';
+            } else {
+                header.style.background = 'transparent';
+                header.style.backdropFilter = 'none';
+                header.style.borderBottom = 'none';
+            }
+        });
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!prefersReducedMotion) {
+            const revealElements = document.querySelectorAll('.reveal');
+            
+            const revealObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            revealElements.forEach(function(el) {
+                revealObserver.observe(el);
+            });
+        } else {
+            document.querySelectorAll('.reveal').forEach(function(el) {
+                el.classList.add('active');
+            });
+        }
+
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const message = document.getElementById('message').value;
+            
+            const whatsappMessage = encodeURIComponent(
+                'Olá! Meu nome é ' + name + '.\n\n' +
+                'Telefone: ' + phone + '\n\n' +
+                'Mensagem: ' + message
+            );
+            
+            window.open('https://wa.me/5516997042199?text=' + whatsappMessage, '_blank');
+            
+            contactForm.reset();
+        });
+
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+            
+            if (value.length > 6) {
+                value = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7);
+            } else if (value.length > 2) {
+                value = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+            } else if (value.length > 0) {
+                value = '(' + value;
+            }
+            
+            e.target.value = value;
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
